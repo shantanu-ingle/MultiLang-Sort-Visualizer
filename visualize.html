@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Side-by-Side Sorting Visualizer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 12px 24px;
+            font-size: 16px;
+            border: none;
+            border-radius: 8px;
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+
+        button:disabled {
+            background: #666;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .speed-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: white;
+        }
+
+        input[type="range"] {
+            width: 120px;
+        }
+
+        .languages-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .language-panel {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .language-title {
+            text-align: center;
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+
+        .python { border-left: 5px solid #3776ab; }
+        .java { border-left: 5px solid #ed8b00; }
+        .cpp { border-left: 5px solid #00599c; }
+
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+            font-size: 0.85rem;
+            opacity: 0.9;
+            gap: 10px;
+        }
+
+        .relative-speed {
+            color: #ffd700;
+            font-weight: bold;
+        }
+
+        .array-container {
+            height: 300px;
+            display: flex;
+            align-items: end;
+            justify-content: center;
+            gap: 3px;
+            padding: 10px;
+            background: rgba(0,0,0,0.1);
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+
+        .bar {
+            background: linear-gradient(to top, #4facfe 0%, #00f2fe 100%);
+            border-radius: 4px 4px 0 0;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: end;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+            font-size: 12px;
+            padding-bottom: 5px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+
+        .bar.comparing {
+            background: linear-gradient(to top, #ff9a9e 0%, #fecfef 100%);
+            transform: scale(1.1);
+            box-shadow: 0 4px 20px rgba(255,154,158,0.5);
+        }
+
+        .bar.swapped {
+            background: linear-gradient(to top, #a8edea 0%, #fed6e3 100%);
+            transform: scale(1.15);
+            box-shadow: 0 6px 25px rgba(168,237,234,0.6);
+        }
+
+        .step-info {
+            text-align: center;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0,0,0,0.1);
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 0.9rem;
+        }
+
+        .summary {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 30px;
+            text-align: center;
+        }
+
+        .summary h2 {
+            margin-bottom: 20px;
+            color: #ffd700;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .summary-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .error {
+            color: #ff6b6b;
+            text-align: center;
+            padding: 20px;
+            background: rgba(255, 107, 107, 0.1);
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        @media (max-width: 768px) {
+            .languages-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔄 Side-by-Side Sorting Visualizer</h1>
+        
+        <div class="controls">
+            <button id="loadBtn">📂 Load JSON Files</button>
+            <button id="startBtn" disabled>▶️ Start Animation</button>
+            <button id="pauseBtn" disabled>⏸️ Pause</button>
+            <button id="resetBtn" disabled>🔄 Reset</button>
+            <div class="speed-control">
+                <label for="speedSlider">Speed:</label>
+                <input type="range" id="speedSlider" min="0.1" max="3.0" step="0.1" value="1.0">
+                <span id="speedValue">1.0x</span>
+            </div>
+        </div>
+
+        <div class="languages-container" id="languagesContainer">
+            <!-- Language panels will be dynamically created here -->
+        </div>
+
+        <div class="summary" id="summary" style="display: none;">
+            <h2>📊 Performance Summary</h2>
+            <div class="summary-grid" id="summaryGrid">
+                <!-- Summary will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class SortingVisualizer {
+            constructor() {
+                this.data = {};
+                this.currentStep = {};
+                this.isPlaying = false;
+                this.isPaused = false;
+                this.baseAnimationTime = 10000; // 10 seconds for the slowest language
+                this.speedMultiplier = 1.0; // Speed adjustment from slider
+                this.languageTimers = {}; // Individual timers for each language
+                this.maxValue = 0;
+                
+                this.initializeElements();
+                this.bindEvents();
+            }
+
+            initializeElements() {
+                this.loadBtn = document.getElementById('loadBtn');
+                this.startBtn = document.getElementById('startBtn');
+                this.pauseBtn = document.getElementById('pauseBtn');
+                this.resetBtn = document.getElementById('resetBtn');
+                this.speedSlider = document.getElementById('speedSlider');
+                this.speedValue = document.getElementById('speedValue');
+                this.languagesContainer = document.getElementById('languagesContainer');
+                this.summary = document.getElementById('summary');
+                this.summaryGrid = document.getElementById('summaryGrid');
+            }
+
+            bindEvents() {
+                this.loadBtn.addEventListener('click', () => this.loadFiles());
+                this.startBtn.addEventListener('click', () => this.startAnimation());
+                this.pauseBtn.addEventListener('click', () => this.pauseAnimation());
+                this.resetBtn.addEventListener('click', () => this.resetAnimation());
+                this.speedSlider.addEventListener('input', (e) => this.updateSpeed(e.target.value));
+            }
+
+            async loadFiles() {
+                try {
+                    const files = ['python_steps.json', 'java_steps.json', 'cpp_steps.json'];
+                    const promises = files.map(file => this.loadJSON(file));
+                    const results = await Promise.all(promises);
+                    
+                    this.data = {
+                        python: results[0],
+                        java: results[1],
+                        cpp: results[2]
+                    };
+
+                    this.maxValue = Math.max(...this.data.python.original_array);
+                    this.createLanguagePanels();
+                    this.enableControls();
+                    this.showSummary();
+                    
+                } catch (error) {
+                    this.showError('Error loading JSON files. Make sure all three files (python_steps.json, java_steps.json, cpp_steps.json) are in the same directory as this HTML file.');
+                }
+            }
+
+            async loadJSON(filename) {
+                const response = await fetch(filename);
+                if (!response.ok) {
+                    throw new Error(`Failed to load ${filename}`);
+                }
+                return await response.json();
+            }
+
+            createLanguagePanels() {
+                this.languagesContainer.innerHTML = '';
+                
+                const languages = [
+                    { key: 'python', name: 'Python', class: 'python' },
+                    { key: 'java', name: 'Java', class: 'java' },
+                    { key: 'cpp', name: 'C++', class: 'cpp' }
+                ];
+
+                languages.forEach(lang => {
+                    const panel = document.createElement('div');
+                    panel.className = `language-panel ${lang.class}`;
+                    panel.innerHTML = `
+                        <div class="language-title">${lang.name}</div>
+                        <div class="stats">
+                            <span>Time: ${this.data[lang.key].execution_time.toFixed(6)}s</span>
+                            <span>Steps: ${this.data[lang.key].total_steps}</span>
+                            <span class="relative-speed" id="${lang.key}-speed">Animation: Calculating...</span>
+                        </div>
+                        <div class="array-container" id="${lang.key}-container"></div>
+                        <div class="step-info" id="${lang.key}-info">Ready to start</div>
+                    `;
+                    this.languagesContainer.appendChild(panel);
+                    this.createBars(lang.key);
+                });
+
+                this.resetSteps();
+                this.updateRelativeSpeedDisplay();
+            }
+
+            createBars(language) {
+                const container = document.getElementById(`${language}-container`);
+                const array = this.data[language].original_array;
+                
+                container.innerHTML = '';
+                array.forEach((value, index) => {
+                    const bar = document.createElement('div');
+                    bar.className = 'bar';
+                    bar.style.height = `${(value / this.maxValue) * 250}px`;
+                    bar.style.width = '25px';
+                    bar.textContent = value;
+                    bar.id = `${language}-bar-${index}`;
+                    container.appendChild(bar);
+                });
+            }
+
+            enableControls() {
+                this.startBtn.disabled = false;
+                this.resetBtn.disabled = false;
+            }
+
+            updateRelativeSpeedDisplay() {
+                // Calculate and display relative animation speeds
+                const executionTimes = {
+                    python: this.data.python.execution_time,
+                    java: this.data.java.execution_time,
+                    cpp: this.data.cpp.execution_time
+                };
+                
+                const slowestTime = Math.max(...Object.values(executionTimes));
+                
+                Object.keys(executionTimes).forEach(lang => {
+                    const speedElement = document.getElementById(`${lang}-speed`);
+                    const relativeSpeed = executionTimes[lang] / slowestTime;
+                    const animationDuration = relativeSpeed * this.baseAnimationTime / 1000; // Convert to seconds
+                    
+                    if (speedElement) {
+                        speedElement.textContent = `Animation: ${animationDuration.toFixed(1)}s (${(relativeSpeed * 100).toFixed(1)}% speed)`;
+                    }
+                });
+            }
+
+            updateSpeed(value) {
+                this.speedMultiplier = parseFloat(value);
+                this.speedValue.textContent = `${value}x`;
+            }
+
+            async startAnimation() {
+                if (this.isPaused) {
+                    this.isPaused = false;
+                    this.startBtn.disabled = true;
+                    this.pauseBtn.disabled = false;
+                    this.continueAnimation();
+                    return;
+                }
+
+                this.isPlaying = true;
+                this.startBtn.disabled = true;
+                this.pauseBtn.disabled = false;
+                this.resetBtn.disabled = true;
+                
+                // Calculate relative speeds based on execution times
+                this.calculateAnimationSpeeds();
+                
+                // Start independent animations for each language
+                await this.runIndependentAnimations();
+                
+                this.isPlaying = false;
+                this.startBtn.disabled = false;
+                this.pauseBtn.disabled = true;
+                this.resetBtn.disabled = false;
+            }
+
+            calculateAnimationSpeeds() {
+                // Find the slowest execution time to use as baseline
+                const executionTimes = {
+                    python: this.data.python.execution_time,
+                    java: this.data.java.execution_time,
+                    cpp: this.data.cpp.execution_time
+                };
+                
+                const slowestTime = Math.max(...Object.values(executionTimes));
+                
+                // Calculate animation duration for each language
+                // Slower languages get longer animation times proportionally
+                this.animationDurations = {};
+                Object.keys(executionTimes).forEach(lang => {
+                    // Scale: slowest language gets baseAnimationTime, others get proportionally less
+                    this.animationDurations[lang] = (executionTimes[lang] / slowestTime) * this.baseAnimationTime / this.speedMultiplier;
+                });
+                
+                // Calculate step intervals for each language
+                this.stepIntervals = {};
+                Object.keys(this.data).forEach(lang => {
+                    const totalSteps = this.data[lang].steps.length - 1; // -1 because we start from step 0
+                    this.stepIntervals[lang] = this.animationDurations[lang] / totalSteps;
+                });
+                
+                console.log('Animation speeds calculated:', {
+                    executionTimes,
+                    animationDurations: this.animationDurations,
+                    stepIntervals: this.stepIntervals
+                });
+            }
+
+            async runIndependentAnimations() {
+                // Start independent animation for each language
+                const promises = ['python', 'java', 'cpp'].map(lang => 
+                    this.animateLanguage(lang)
+                );
+                
+                // Wait for all animations to complete
+                await Promise.all(promises);
+            }
+
+            async animateLanguage(language) {
+                const totalSteps = this.data[language].steps.length;
+                const stepInterval = this.stepIntervals[language];
+                
+                for (let step = 0; step < totalSteps && this.isPlaying; step++) {
+                    // Wait for pause to be released
+                    while (this.isPaused && this.isPlaying) {
+                        await this.sleep(100);
+                    }
+                    
+                    if (!this.isPlaying) break;
+                    
+                    this.currentStep[language] = step;
+                    this.updateVisualization(language);
+                    
+                    // Don't wait after the last step
+                    if (step < totalSteps - 1) {
+                        await this.sleep(stepInterval);
+                    }
+                }
+            }
+
+            continueAnimation() {
+                // Animation will resume automatically when isPaused becomes false
+                // Individual language animations handle pause checking
+            }
+
+            pauseAnimation() {
+                this.isPaused = true;
+                this.startBtn.disabled = false;
+                this.pauseBtn.disabled = true;
+            }
+
+            resetAnimation() {
+                this.isPlaying = false;
+                this.isPaused = false;
+                this.resetSteps();
+                this.startBtn.disabled = false;
+                this.pauseBtn.disabled = true;
+                this.resetBtn.disabled = false;
+                
+                // Clear any existing timers
+                Object.keys(this.languageTimers).forEach(key => {
+                    if (this.languageTimers[key]) {
+                        clearTimeout(this.languageTimers[key]);
+                    }
+                });
+                this.languageTimers = {};
+            }
+
+            async runAnimation() {
+                const maxSteps = Math.max(
+                    this.data.python.steps.length,
+                    this.data.java.steps.length,
+                    this.data.cpp.steps.length
+                );
+
+                while (this.isPlaying && !this.isPaused && 
+                       (this.currentStep.python < this.data.python.steps.length - 1 ||
+                        this.currentStep.java < this.data.java.steps.length - 1 ||
+                        this.currentStep.cpp < this.data.cpp.steps.length - 1)) {
+                    
+                    // Advance each language that still has steps
+                    ['python', 'java', 'cpp'].forEach(lang => {
+                        if (this.currentStep[lang] < this.data[lang].steps.length - 1) {
+                            this.currentStep[lang]++;
+                        }
+                    });
+
+                    this.updateAllVisualizations();
+                    await this.sleep(this.animationSpeed);
+                }
+            }
+
+            continueAnimation() {
+                this.runAnimation();
+            }
+
+            resetSteps() {
+                this.currentStep = { python: 0, java: 0, cpp: 0 };
+                this.updateAllVisualizations();
+            }
+
+            updateAllVisualizations() {
+                ['python', 'java', 'cpp'].forEach(lang => {
+                    this.updateVisualization(lang);
+                });
+            }
+
+            updateVisualization(language) {
+                const step = this.data[language].steps[this.currentStep[language]];
+                const container = document.getElementById(`${language}-container`);
+                const info = document.getElementById(`${language}-info`);
+
+                // Clear all bar styles
+                const bars = container.querySelectorAll('.bar');
+                bars.forEach(bar => {
+                    bar.className = 'bar';
+                });
+
+                // Update array values and positions
+                step.array.forEach((value, index) => {
+                    const bar = document.getElementById(`${language}-bar-${index}`);
+                    if (bar) {
+                        bar.textContent = value;
+                        bar.style.height = `${(value / this.maxValue) * 250}px`;
+                    }
+                });
+
+                // Highlight comparing elements
+                if (step.comparing && step.comparing.length > 0) {
+                    step.comparing.forEach(index => {
+                        const bar = document.getElementById(`${language}-bar-${index}`);
+                        if (bar) {
+                            bar.classList.add(step.swapped ? 'swapped' : 'comparing');
+                        }
+                    });
+                }
+
+                // Update step information
+                info.textContent = `Step ${step.step}: ${step.description}`;
+            }
+
+            showSummary() {
+                this.summary.style.display = 'block';
+                
+                const languages = [
+                    { key: 'python', name: 'Python 🐍', color: '#3776ab' },
+                    { key: 'java', name: 'Java ☕', color: '#ed8b00' },
+                    { key: 'cpp', name: 'C++ ⚡', color: '#00599c' }
+                ];
+
+                // Sort by execution time for ranking
+                const sortedLangs = languages.sort((a, b) => 
+                    this.data[a.key].execution_time - this.data[b.key].execution_time
+                );
+
+                this.summaryGrid.innerHTML = '';
+                
+                sortedLangs.forEach((lang, index) => {
+                    const data = this.data[lang.key];
+                    const item = document.createElement('div');
+                    item.className = 'summary-item';
+                    
+                    const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉';
+                    
+                    item.innerHTML = `
+                        <h3>${medal} ${lang.name}</h3>
+                        <p><strong>Execution Time:</strong> ${data.execution_time.toFixed(6)}s</p>
+                        <p><strong>Total Steps:</strong> ${data.total_steps}</p>
+                        <p><strong>Rank:</strong> ${index + 1}${this.getOrdinalSuffix(index + 1)} place</p>
+                    `;
+                    item.style.borderLeft = `4px solid ${lang.color}`;
+                    this.summaryGrid.appendChild(item);
+                });
+
+                // Add comparison information
+                const comparisonItem = document.createElement('div');
+                comparisonItem.className = 'summary-item';
+                comparisonItem.innerHTML = `
+                    <h3>📈 Performance Analysis</h3>
+                    <p><strong>Fastest:</strong> ${sortedLangs[0].name}</p>
+                    <p><strong>Slowest:</strong> ${sortedLangs[2].name}</p>
+                    <p><strong>Speed Difference:</strong> ${(this.data[sortedLangs[2].key].execution_time / this.data[sortedLangs[0].key].execution_time).toFixed(2)}x</p>
+                    <p><strong>Animation Ratio:</strong> Fastest language will animate ${(this.data[sortedLangs[2].key].execution_time / this.data[sortedLangs[0].key].execution_time).toFixed(2)}x faster</p>
+                    <p><em>Animation speeds are proportional to actual execution times.</em></p>
+                `;
+                this.summaryGrid.appendChild(comparisonItem);
+            }
+
+            getOrdinalSuffix(num) {
+                const suffix = ['th', 'st', 'nd', 'rd'];
+                const v = num % 100;
+                return suffix[(v - 20) % 10] || suffix[v] || suffix[0];
+            }
+
+            showError(message) {
+                this.languagesContainer.innerHTML = `
+                    <div class="error">
+                        <h3>❌ Error</h3>
+                        <p>${message}</p>
+                        <p><strong>Instructions:</strong></p>
+                        <ol style="text-align: left; margin-top: 10px;">
+                            <li>Run the Python script: <code>python bubble_sort.py</code></li>
+                            <li>Compile and run Java: <code>javac BubbleSortVisualizer.java && java BubbleSortVisualizer</code></li>
+                            <li>Compile and run C++: <code>g++ -o bubble_sort bubble_sort.cpp && ./bubble_sort</code></li>
+                            <li>Make sure all JSON files are in the same folder as this HTML file</li>
+                            <li>Open this HTML file in a web browser</li>
+                        </ol>
+                    </div>
+                `;
+            }
+
+            sleep(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
+            }
+        }
+
+        // Initialize the visualizer when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new SortingVisualizer();
+        });
+    </script>
+</body>
+</html>
