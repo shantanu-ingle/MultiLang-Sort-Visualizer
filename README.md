@@ -45,12 +45,6 @@ python bubble_sort.py
 ```
 
 
-Generate JSON Files:
-
-Python: Run python bubble_sort.py to generate python_steps.json.
-
-
-
 Java: Compile and run:
 ```bash
 javac BubbleSortVisualizer.java
@@ -108,3 +102,13 @@ index.html: HTML file with JavaScript and CSS for the visualizer.
 
 
 *.json: Generated files containing sorting steps and metadata.
+
+Output:
+![Screenshot 2025-05-31 145119](https://github.com/user-attachments/assets/a1ec7591-474c-4fb5-8cbc-c58e604b9a5d)
+![Screenshot 2025-05-31 145154](https://github.com/user-attachments/assets/727adce2-5268-4125-97af-17cf2a73f8f0)
+
+
+
+https://github.com/user-attachments/assets/30d07480-4bae-4fcf-a9e5-a41964f03e1a
+
+
